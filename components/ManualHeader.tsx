@@ -4,7 +4,8 @@ import { useMoralis } from 'react-moralis'
 export default function ManualHeader() {
     // * This is equivalent to the raw use of ethers.js library:
     // ! await window.ethereum.request({ method: "eth_requestAccounts" })
-    const { enableWeb3, account, isWeb3Enabled, Moralis, deactivateWeb3 } = useMoralis()
+    const { enableWeb3, account, isWeb3Enabled, Moralis, deactivateWeb3, isWeb3EnableLoading } =
+        useMoralis()
 
     // ? This is a React core hook
     // ? it automatically runs on load
@@ -19,7 +20,7 @@ export default function ManualHeader() {
             }
             // ? No dependency array: it runs anytime something re-renders
             // ! CAREFUL with this>!! Because then you can get circular render
-            // * Black dependency array: runs once on load
+            // * Blank dependency array: runs once on load
         },
         [isWeb3Enabled, enableWeb3]
         // , []
@@ -52,6 +53,7 @@ export default function ManualHeader() {
                             window.localStorage.setItem('connected', 'injected')
                         }
                     }}
+                    disabled={isWeb3EnableLoading}
                 >
                     Connect
                 </button>
