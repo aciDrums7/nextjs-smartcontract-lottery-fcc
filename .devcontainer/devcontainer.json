@@ -34,7 +34,7 @@
 	// More info: https://containers.dev/implementors/json_reference/#port-attributes
 	"portsAttributes": {
 		"3000": {
-		  "label": "Hardhat Smart Contract Lottery fCC",
+		  "label": "NextJS App",
 		  "onAutoForward": "silent"
 		}
 	  },
