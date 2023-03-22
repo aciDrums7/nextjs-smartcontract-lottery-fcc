@@ -5,7 +5,7 @@ import { useWeb3Contract } from 'react-moralis'
 import { abi, contractAddresses } from '../constants'
 import { useMoralis } from 'react-moralis'
 import { useEffect, useState } from 'react'
-import { ethers, BigNumber, ContractTransaction } from 'ethers'
+import { ethers, BigNumber, ContractTransaction, ContractInterface } from 'ethers'
 import { useNotification } from 'web3uikit'
 
 interface ContractAddressesInterface {
@@ -16,7 +16,7 @@ export default function LotteryEntrance() {
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis()
     const addresses: ContractAddressesInterface = contractAddresses
     const chainId: string = parseInt(chainIdHex!).toString()
-    const lotteryAddress = chainId in addresses ? addresses[chainId][0] : null
+    const lotteryAddress = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9'
 
     // ? useStateHook: needed to trigger the useEffect rerendering
     const [entranceFee, setEntranceFee] = useState('0')
@@ -24,6 +24,10 @@ export default function LotteryEntrance() {
     const [recentWinner, setRecentWinner] = useState('0')
 
     const dispatch = useNotification()
+
+    const signer = new ethers.providers.JsonRpcProvider().getSigner()
+    const lottery = new ethers.Contract(lotteryAddress as string, abi as ContractInterface, signer)
+    let isLotteryStarted = false
 
     const { runContractFunction: enterLottery } = useWeb3Contract({
         abi: abi,
@@ -57,19 +61,20 @@ export default function LotteryEntrance() {
     async function updateUI() {
         const entranceFeeFromCall = ((await getEntranceFee()) as BigNumber).toString()
         const numberOfPlayersFromCall = ((await getNumberOfPlayers()) as BigNumber).toString()
-        const recentWinnerFromCall = ((await getRecentWinner()) as BigNumber).toString()
+        const recentWinnerFromCall = (await getRecentWinner()) as string
         setEntranceFee(entranceFeeFromCall)
         setNumberOfPlayers(numberOfPlayersFromCall)
         setRecentWinner(recentWinnerFromCall)
     }
 
-    const hanldeSuccess = async (transaction: ContractTransaction) => {
+    const handleSuccess = async (transaction: ContractTransaction) => {
         await transaction.wait(1)
-        handleNewNotification(transaction)
+        handleNewNotification()
         updateUI()
+        isLotteryStarted = true
     }
 
-    const handleNewNotification = (transaction: ContractTransaction) => {
+    const handleNewNotification = () => {
         dispatch({
             type: 'info',
             message: 'Transaction Complete!',
@@ -84,7 +89,14 @@ export default function LotteryEntrance() {
             // TODO: try to read the lottery entrance fee
             updateUI()
         }
-    }, [isWeb3Enabled, updateUI])
+    }, [isWeb3Enabled])
+
+    useEffect(() => {
+        lottery.on('RequestedLotteryWinner', (value) => {
+            console.log(value)
+            updateUI()
+        })
+    }, [isLotteryStarted, lottery])
 
     return (
         <div>
@@ -96,7 +108,7 @@ export default function LotteryEntrance() {
                             await enterLottery({
                                 // ? onSuccess doesn't control tx block confirmation, only that is correctly sent to the wallet
                                 onSuccess: (transaction) =>
-                                    hanldeSuccess(transaction as ContractTransaction),
+                                    handleSuccess(transaction as ContractTransaction),
                                 onError: (error: Error) => console.log(error),
                             })
                         }}
