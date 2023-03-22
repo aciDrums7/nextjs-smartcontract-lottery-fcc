@@ -5,7 +5,14 @@ import { useWeb3Contract } from 'react-moralis'
 import { abi, contractAddresses } from '../constants'
 import { useMoralis } from 'react-moralis'
 import { useEffect, useState } from 'react'
-import { ethers, BigNumber, ContractTransaction, ContractInterface } from 'ethers'
+import {
+    ethers,
+    BigNumber,
+    ContractTransaction,
+    ContractInterface,
+    Contract,
+    providers,
+} from 'ethers'
 import { useNotification } from 'web3uikit'
 
 interface ContractAddressesInterface {
@@ -16,7 +23,7 @@ export default function LotteryEntrance() {
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis()
     const addresses: ContractAddressesInterface = contractAddresses
     const chainId: string = parseInt(chainIdHex!).toString()
-    const lotteryAddress = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9'
+    const lotteryAddress = chainId in addresses ? addresses[chainId][0] : null
 
     // ? useStateHook: needed to trigger the useEffect rerendering
     const [entranceFee, setEntranceFee] = useState('0')
@@ -25,9 +32,20 @@ export default function LotteryEntrance() {
 
     const dispatch = useNotification()
 
-    const signer = new ethers.providers.JsonRpcProvider().getSigner()
-    const lottery = new ethers.Contract(lotteryAddress as string, abi as ContractInterface, signer)
-    let isLotteryStarted = false
+    let signer: providers.JsonRpcSigner
+    let lottery: Contract | undefined
+
+    if (lotteryAddress) {
+        signer = new ethers.providers.JsonRpcProvider().getSigner()
+        lottery = new ethers.Contract(lotteryAddress as string, abi as ContractInterface, signer)
+    }
+
+    lottery?.on('RequestedLotteryWinner', (value) => {
+        console.log('RequestedLotteryWinner event fired!')
+        console.log(value)
+        updateUI()
+        // lottery?.off('RequestedLotteryWinner', () => {})
+    })
 
     const { runContractFunction: enterLottery } = useWeb3Contract({
         abi: abi,
@@ -70,8 +88,7 @@ export default function LotteryEntrance() {
     const handleSuccess = async (transaction: ContractTransaction) => {
         await transaction.wait(1)
         handleNewNotification()
-        updateUI()
-        isLotteryStarted = true
+        await updateUI()
     }
 
     const handleNewNotification = () => {
@@ -90,13 +107,6 @@ export default function LotteryEntrance() {
             updateUI()
         }
     }, [isWeb3Enabled])
-
-    useEffect(() => {
-        lottery.on('RequestedLotteryWinner', (value) => {
-            console.log(value)
-            updateUI()
-        })
-    }, [isLotteryStarted, lottery])
 
     return (
         <div>

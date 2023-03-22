@@ -22,7 +22,8 @@
 			"esbenp.prettier-vscode",
 			"TabNine.tabnine-vscode",
 			"kisstkondoros.typelens",
-			"oderwat.indent-rainbow"
+			"oderwat.indent-rainbow",
+			"jasonnutter.search-node-modules"
 		]
 	  }
 	},
