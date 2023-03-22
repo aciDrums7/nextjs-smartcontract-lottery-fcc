@@ -56,21 +56,19 @@ export default function LotteryEntrance() {
 
     async function updateUI() {
         const entranceFeeFromCall = ((await getEntranceFee()) as BigNumber).toString()
-        const numberOfPlayersFromCall = (
-            (await getNumberOfPlayers()) as BigNumber
-        ).toString()
+        const numberOfPlayersFromCall = ((await getNumberOfPlayers()) as BigNumber).toString()
         const recentWinnerFromCall = ((await getRecentWinner()) as BigNumber).toString()
         setEntranceFee(entranceFeeFromCall)
         setNumberOfPlayers(numberOfPlayersFromCall)
         setRecentWinner(recentWinnerFromCall)
     }
-    
+
     const hanldeSuccess = async (transaction: ContractTransaction) => {
         await transaction.wait(1)
         handleNewNotification(transaction)
         updateUI()
     }
-    
+
     const handleNewNotification = (transaction: ContractTransaction) => {
         dispatch({
             type: 'info',
@@ -96,6 +94,7 @@ export default function LotteryEntrance() {
                     <button
                         onClick={async () => {
                             await enterLottery({
+                                // ? onSuccess doesn't control tx block confirmation, only that is correctly sent to the wallet
                                 onSuccess: (transaction) =>
                                     hanldeSuccess(transaction as ContractTransaction),
                                 onError: (error: Error) => console.log(error),
