@@ -23,7 +23,7 @@ export default function LotteryEntrance() {
         contractAddress: contractAddresses['31337'][0], // ! specify the networkId
         functionName: 'enterLottery',
         params: {},
-        msgValue: '',
+        msgValue: entranceFee,
     })
 
     const { runContractFunction: getEntranceFee } = useWeb3Contract({
@@ -39,8 +39,8 @@ export default function LotteryEntrance() {
             // TODO: try to read the lottery entrance fee
             const updateUI = async function updateUI() {
                 const entranceFeeFromCall = ((await getEntranceFee()) as BigNumber).toString()
-                setEntranceFee(ethers.utils.formatUnits(entranceFeeFromCall, 'ether'))
-                console.log(`entranceFee: ${entranceFee}`)
+                setEntranceFee(entranceFeeFromCall)
+                console.log(`entranceFee: ${ethers.utils.formatUnits(entranceFee, 'ether')}`)
             }
             updateUI()
         }
@@ -48,7 +48,21 @@ export default function LotteryEntrance() {
 
     return (
         <div>
-            Hi from lottery entrance!<div>Entrance Fee: {entranceFee} ETH</div>
+            Hi from lottery entrance!
+            {lotteryAddress ? (
+                <div>
+                    <button
+                        onClick={async () => {
+                            await enterLottery()
+                        }}
+                    >
+                        Enter Lottery
+                    </button>
+                    Entrance Fee: {ethers.utils.formatUnits(entranceFee, 'ether')} ETH
+                </div>
+            ) : (
+                <div>No Lottery Address Detected!</div>
+            )}
         </div>
     )
 }
