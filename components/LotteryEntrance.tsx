@@ -37,7 +37,7 @@ export default function LotteryEntrance() {
             // TODO: try to read the lottery entrance fee
             const updateUI = async function updateUI() {
                 const entranceFee = await getEntranceFee()
-                console.log(entranceFee)
+                console.log(`entranceFee: ${entranceFee}`)
             }
             updateUI()
         }
