@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // TODO: have a function to enter the lottery
 
 import { useWeb3Contract } from 'react-moralis'
@@ -19,6 +20,8 @@ export default function LotteryEntrance() {
 
     // ? useStateHook: needed to trigger the useEffect rerendering
     const [entranceFee, setEntranceFee] = useState('0')
+    const [numberOfPlayers, setNumberOfPlayers] = useState('0')
+    const [recentWinner, setRecentWinner] = useState('0')
 
     const dispatch = useNotification()
 
@@ -35,26 +38,39 @@ export default function LotteryEntrance() {
         contractAddress: contractAddresses['31337'][0], // ! specify the networkId
         functionName: 'getEntranceFee',
         params: {},
-        msgValue: '',
     })
 
-    useEffect(() => {
-        if (isWeb3Enabled) {
-            // TODO: try to read the lottery entrance fee
-            const updateUI = async function updateUI() {
-                const entranceFeeFromCall = ((await getEntranceFee()) as BigNumber).toString()
-                setEntranceFee(entranceFeeFromCall)
-                console.log(`entranceFee: ${ethers.utils.formatUnits(entranceFee, 'ether')}`)
-            }
-            updateUI()
-        }
-    }, [getEntranceFee, isWeb3Enabled, entranceFee])
+    const { runContractFunction: getNumberOfPlayers } = useWeb3Contract({
+        abi: abi,
+        contractAddress: contractAddresses['31337'][0], // ! specify the networkId
+        functionName: 'getNumberOfPlayers',
+        params: {},
+    })
 
+    const { runContractFunction: getRecentWinner } = useWeb3Contract({
+        abi: abi,
+        contractAddress: contractAddresses['31337'][0], // ! specify the networkId
+        functionName: 'getRecentWinner',
+        params: {},
+    })
+
+    async function updateUI() {
+        const entranceFeeFromCall = ((await getEntranceFee()) as BigNumber).toString()
+        const numberOfPlayersFromCall = (
+            (await getNumberOfPlayers()) as BigNumber
+        ).toString()
+        const recentWinnerFromCall = ((await getRecentWinner()) as BigNumber).toString()
+        setEntranceFee(entranceFeeFromCall)
+        setNumberOfPlayers(numberOfPlayersFromCall)
+        setRecentWinner(recentWinnerFromCall)
+    }
+    
     const hanldeSuccess = async (transaction: ContractTransaction) => {
         await transaction.wait(1)
         handleNewNotification(transaction)
+        updateUI()
     }
-
+    
     const handleNewNotification = (transaction: ContractTransaction) => {
         dispatch({
             type: 'info',
@@ -64,6 +80,13 @@ export default function LotteryEntrance() {
             icon: 'bell',
         })
     }
+
+    useEffect(() => {
+        if (isWeb3Enabled) {
+            // TODO: try to read the lottery entrance fee
+            updateUI()
+        }
+    }, [isWeb3Enabled, updateUI])
 
     return (
         <div>
@@ -81,7 +104,12 @@ export default function LotteryEntrance() {
                     >
                         Enter Lottery
                     </button>
+                    <br />
                     Entrance Fee: {ethers.utils.formatUnits(entranceFee, 'ether')} ETH
+                    <br />
+                    Players: {numberOfPlayers}
+                    <br />
+                    Recent Winner: {recentWinner}
                 </div>
             ) : (
                 <div>No Lottery Address Detected...</div>
