@@ -23,7 +23,10 @@
 			"TabNine.tabnine-vscode",
 			"kisstkondoros.typelens",
 			"oderwat.indent-rainbow",
-			"jasonnutter.search-node-modules"
+			"jasonnutter.search-node-modules",
+			"csstools.postcss",
+			"bradlc.vscode-tailwindcss",
+			"yatki.vscode-surround"
 		]
 	  }
 	},

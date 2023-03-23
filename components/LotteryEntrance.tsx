@@ -40,14 +40,11 @@ export default function LotteryEntrance() {
         lottery = new ethers.Contract(lotteryAddress as string, abi as ContractInterface, signer)
     }
 
-    /* lottery?.on('RequestedLotteryWinner', (value) => {
-        // console.log('RequestedLotteryWinner event fired!')
-        // console.log(value)
-        updateUI()
-        // lottery?.off('RequestedLotteryWinner', () => {})
-    }) */
-
-    const { runContractFunction: enterLottery } = useWeb3Contract({
+    const {
+        runContractFunction: enterLottery,
+        isLoading,
+        isFetching,
+    } = useWeb3Contract({
         abi: abi,
         contractAddress: contractAddresses['31337'][0], // ! specify the networkId
         functionName: 'enterLottery',
@@ -103,17 +100,33 @@ export default function LotteryEntrance() {
 
     useEffect(() => {
         if (isWeb3Enabled) {
-            // TODO: try to read the lottery entrance fee
             updateUI()
+            if (numberOfPlayers != '0') {
+                console.log('eventListner')
+                lottery?.on('RequestedLotteryWinner', (author, value) => {
+                    console.log('event RequestedLotteryWinner fired!')
+                    updateUI()
+                    console.log(author)
+                    console.log(value)
+                })
+            }
         }
-    }, [isWeb3Enabled])
+
+        return () => {
+            if (numberOfPlayers == '0' && !isWeb3Enabled) {
+                console.log('cleanup')
+                lottery?.off('RequestedLotteryWinner', () => {})
+            }
+        }
+    }, [isWeb3Enabled, numberOfPlayers])
 
     return (
-        <div>
+        <div className="p-5">
             Hi from lottery entrance!
             {lotteryAddress ? (
-                <div>
+                <div className="">
                     <button
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-auto"
                         onClick={async () => {
                             await enterLottery({
                                 // ? onSuccess doesn't control tx block confirmation, only that is correctly sent to the wallet
@@ -122,15 +135,17 @@ export default function LotteryEntrance() {
                                 onError: (error: Error) => console.log(error),
                             })
                         }}
+                        disabled={isLoading || isFetching}
                     >
-                        Enter Lottery
+                        {isLoading || isFetching ? (
+                            <div className="animate-spin spinner-border h-8 w-8 border-b-2 rounded-full"></div>
+                        ) : (
+                            <div>Enter Lottery</div>
+                        )}
                     </button>
-                    <br />
-                    Entrance Fee: {ethers.utils.formatUnits(entranceFee, 'ether')} ETH
-                    <br />
-                    Players: {numberOfPlayers}
-                    <br />
-                    Recent Winner: {recentWinner}
+                    <div>Entrance Fee: {ethers.utils.formatUnits(entranceFee, 'ether')} ETH</div>
+                    <div>Players: {numberOfPlayers}</div>
+                    <div>Recent Winner: {recentWinner}</div>
                 </div>
             ) : (
                 <div>No Lottery Address Detected...</div>
