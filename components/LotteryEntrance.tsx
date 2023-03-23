@@ -40,12 +40,12 @@ export default function LotteryEntrance() {
         lottery = new ethers.Contract(lotteryAddress as string, abi as ContractInterface, signer)
     }
 
-    lottery?.on('RequestedLotteryWinner', (value) => {
-        console.log('RequestedLotteryWinner event fired!')
-        console.log(value)
+    /* lottery?.on('RequestedLotteryWinner', (value) => {
+        // console.log('RequestedLotteryWinner event fired!')
+        // console.log(value)
         updateUI()
         // lottery?.off('RequestedLotteryWinner', () => {})
-    })
+    }) */
 
     const { runContractFunction: enterLottery } = useWeb3Contract({
         abi: abi,
